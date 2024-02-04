@@ -4,18 +4,18 @@ orbs:
   node: circleci/node@4.7
   docker: circleci/docker@2.5.0
 
-# jobs:
-#   check-code:
-#     docker:
-#       - image: circleci/node:14
-#     steps:
-#       - checkout
-#       - run:
-#           name: Install Dependencies
-#           command: npm install
-#       - run:
-#           name: Run Tests
-#           command: npm test
+jobs:
+  check-code:
+    docker:
+      - image: circleci/node:14
+    steps:
+      - checkout
+      - run:
+          name: Install Dependencies
+          command: npm install
+      - run:
+          name: Run Tests
+          command: npm test
 
 #   build-and-push:
 #     environment:
