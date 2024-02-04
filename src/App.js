@@ -7,15 +7,15 @@ function App() {
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
         <p>
-          Edit <code>src/App.js</code> and save to reload.
+          OK CI-CD SUCCESS
         </p>
         <a
           className="App-link"
-          href="https://reactjs.org"
+          href="https://github.com/JustinNguyen9979/app-react-ci-cd"
           target="_blank"
           rel="noopener noreferrer"
         >
-          Learn React
+          Link Source
         </a>
       </header>
     </div>
