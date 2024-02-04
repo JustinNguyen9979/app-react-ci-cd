@@ -1,15 +1,16 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: ci-cd-app-argocd 
+  name: app-argocd 
   namespace: argocd
 spec:
   destination:
-    namespace: default
+    namespace: web-app
     server: https://kubernetes.default.svc
   project: default
   source:
     path: application-manifet
     repoURL: https://github.com/JustinNguyen9979/app-react-ci-cd.git
     targetRevision: HEAD
-  syncPolicy: {}
+  syncPolicy: 
+  # automated: {}
