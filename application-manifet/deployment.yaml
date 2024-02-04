@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: web-react
 spec:
+  minReplicas: 2
+  maxReplicas: 8
   selector:
     matchLabels:
       run: web-react
@@ -18,7 +20,7 @@ spec:
     spec:
       containers:
       - name: ci-cd-app-container
-        image: 997909799/ci-cd-k8s:1.5
+        image: 997909799/ci-cd-k8s:1.5.1
         imagePullPolicy: Always
         resources:
           limits:
