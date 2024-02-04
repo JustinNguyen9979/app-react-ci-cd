@@ -3,16 +3,15 @@ kind: Deployment
 metadata:
   name: web-react
 spec:
-  minReplicas: 2
-  maxReplicas: 8
+  replicas: 5
   selector:
     matchLabels:
       run: web-react
-  # strategy:
-  #   rollingUpdate:
-  #     maxSurge: 25%
-  #     maxUnavailable: 25%
-  #   type: RollingUpdate
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -20,7 +19,7 @@ spec:
     spec:
       containers:
       - name: ci-cd-app-container
-        image: 997909799/ci-cd-k8s:1.5.1
+        image: 997909799/ci-cd-k8s:1.5.2
         imagePullPolicy: Always
         resources:
           limits:
