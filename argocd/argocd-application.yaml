@@ -9,7 +9,7 @@ spec:
     server: https://kubernetes.default.svc
   project: default
   source:
-    path: app-react/application-manifet
+    path: application-manifet
     repoURL: https://github.com/JustinNguyen9979/app-react-ci-cd.git
     targetRevision: HEAD
   syncPolicy: {}
