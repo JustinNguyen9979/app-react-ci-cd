@@ -27,13 +27,6 @@ jobs:
           command: |
             echo "Digest is: $(</tmp/digest.txt)"
 
-# workflows:
-#   sample: 
-#     jobs:
-#       - node/test:
-#           version: '16.10'
-#           pkg-manager: npm
-
 workflows:
   my-pipeline:
     jobs:
