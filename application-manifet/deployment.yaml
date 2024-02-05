@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: ci-cd-app-container
-        image: 997909799/ci-cd-k8s:1.5.3
+        image: 997909799/ci-cd-k8s:1.5.4
         imagePullPolicy: Always
         resources:
           limits:

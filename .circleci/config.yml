@@ -5,10 +5,22 @@ orbs:
   docker: circleci/docker@2.5.0
 
 jobs:
+  node/test:
+    docker:
+      - image: circleci/node:14
+    steps:
+      - checkout
+      - run:
+          name: Install Dependencies
+          command: npm install
+      - run:
+          name: Run Tests
+          command: npm test
+
   build-and-push:
     environment:
       DOCKER_IMAGE: 997909799/ci-cd-k8s
-      DOCKER_TAG: 1.5.3
+      DOCKER_TAG: 1.5.4
     executor: docker/docker
     steps:
       - setup_remote_docker
@@ -28,11 +40,13 @@ jobs:
             echo "Digest is: $(</tmp/digest.txt)"
 
 workflows:
-  my-pipeline:
+  test-build-push-image:
     jobs:
       - node/test:
-          version: '16.10'
-          pkg-manager: npm
+          filters:
+            branches:
+              only: 
+                - main
       - build-and-push:
           requires:
             - node/test
