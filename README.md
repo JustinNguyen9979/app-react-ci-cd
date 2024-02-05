@@ -1,70 +1,173 @@
-# Getting Started with Create React App
+# Sơ đồ bài LAB
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+![setup.png](setup.png?raw=true "setup.png")
 
-## Available Scripts
+# Dựng Cluster Load Balancing
 
-In the project directory, you can run:
+Tạo ssh key
 
-### `npm start`
+```
+ssh-keygen -t rsa
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Khởi tạo Nodes
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+```
+cd Cluster-Loadbalancing
+vagrant up
+```
 
-### `npm test`
+Sau khi tạo thành công các Node thì SSH vào từng Node để có thể dùng ansible-playbook tự động cài đặt các Tool cần thiết cho Node và dựng Cluster
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Cài đặt Load Balancer
 
-### `npm run build`
+```
+ansible-playbook -i playbook/lb_inventory.yml playbook/lb_playbook.yml --extra-vars "cluster_vip=172.16.0.16"
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+SSH vào IP 172.16.0.16 để kiểm tra trạng thái
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```
+ssh ci@172.16.0.16
+sudo systemctl status haproxy
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Cài đặt Kubernetes Cluster
 
-### `npm run eject`
+```
+ansible-playbook -i playbook/cluster_inventory.yml playbook/cluster_playbook.yml --extra-vars "cluster_vip=172.16.0.16"
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+Kéo File config K8s về máy Local
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```
+scp ci@172.16.1.11:/home/ci/.kube/config ~/.kube/config
+kubectl get no
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Cài đặt Nginx Ingress Controller
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+```
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.1/deploy/static/provider/baremetal/deploy.yaml
+kubectl get po -n ingress-nginx
+```
 
-## Learn More
+Chuyển tiếp các yêu cầu từ bên ngoài đến dịch vụ trong Cluster
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```
+kubectl -n ingress-nginx patch svc ingress-nginx-controller --patch '{"spec": { "type": "NodePort", "ports": [ { "port": 80, "nodePort": 30100 }, { "port": 443, "nodePort": 30101 } ] } }'
+kubectl get svc -n ingress-nginx
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Cài configmap
 
-### Code Splitting
+```
+kubectl -n ingress-nginx patch configmap ingress-nginx-controller --patch-file patch-configmap.yaml
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+# 1. Chạy Trên Máy Local
 
-### Analyzing the Bundle Size
+## 1.1 Cài ArgoCD
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```
+kubectl create ns argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+```
+Dùng Port-Forward để chạy ArgoCD ở local
 
-### Making a Progressive Web App
+```
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+Lấy password của ArgoCD
 
-### Advanced Configuration
+```
+argocd admin initial-password -n argocd
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+Login bằng CLI
 
-### Deployment
+```
+argocd login <IP>
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+Đổi password ArgoCD
 
-### `npm run build` fails to minify
+```
+argocd account update-password
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 1.2 Cài Đặt Longhorn Để Lưu Trữ Dữ Liệu
+
+Thêm Repo của Longhorn
+
+```
+helm repo add longhorn https://charts.longhorn.io
+helm repo update
+```
+
+Cài đặt Longhorn
+
+```
+helm install longhorn longhorn/longhorn --namespace longhorn-system --create-namespace --version 1.5.3
+```
+
+Xem các Pod của Longhorn
+
+```
+kubectl -n longhorn-system get pod
+```
+
+Truy cập vào giao diện UI thông qua Port-forward
+
+```
+kubectl port-forward svc/longhorn-frontend -n longhorn-system 8080:80
+```
+
+## 1.3 Sử Dụng CircleCI Để Test-Build-Push Code
+
+Login vào CircleCI bằng tk Github, chọn Repo cần CI và tạo File config.yaml.
+
+Chọn Projects -> chọn Repo -> Set Up Project -> Project Settings -> Enviroment Variables -> thêm tài khoản Docker với [Name: DOCKER_PASSWORD, Value: "password docker"], [Name: DOCKER_USER, Value: "user name"]
+
+## 1.4 ArgoCD
+
+Chạy File argocd-application.yaml để tạo App trên ArgoCD
+```
+kubectl apply -f argocd/argocd-application.yaml
+```
+
+##
+
+# 2. Public Ra Domain
+
+## 2.1 Cài 1 Cert-manager.
+
+Mục đích chính là để tạo SSL cho domain.
+
+```
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+kubectl create ns cert-manager
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.9.1/cert-manager.crds.yaml
+helm install my-release -n cert-manager --version v1.9.1 jetstack/cert-manager
+```
+
+## 2.2 Cài Nginx Ingress Controller
+
+Nginx Ingress Controller để quản lý việc External IP Loadbalancer ra bên ngoài.
+
+```
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+helm install nginx-ingress ingress-nginx/ingress-nginx --set controller.publishService.enabled=true
+kubectl get svc -n default -o wide
+```
+
+
+
+
+
+
+
+
