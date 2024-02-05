@@ -5,7 +5,7 @@ orbs:
   docker: circleci/docker@2.5.0
 
 jobs:
-  node/test:
+  check-code:
     docker:
       - image: circleci/node:14
     steps:
@@ -42,14 +42,14 @@ jobs:
 workflows:
   test-build-push-image:
     jobs:
-      - node/test:
+      - check-code:
           filters:
             branches:
               only: 
                 - main
       - build-and-push:
           requires:
-            - node/test
+            - check-code
           filters:
             branches:
               only:
