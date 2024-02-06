@@ -45,26 +45,6 @@ scp ci@172.16.1.11:/home/ci/.kube/config ~/.kube/config
 kubectl get no
 ```
 
-Cài đặt Nginx Ingress Controller
-
-```
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.1/deploy/static/provider/baremetal/deploy.yaml
-kubectl get po -n ingress-nginx
-```
-
-Chuyển tiếp các yêu cầu từ bên ngoài đến dịch vụ trong Cluster
-
-```
-kubectl -n ingress-nginx patch svc ingress-nginx-controller --patch '{"spec": { "type": "NodePort", "ports": [ { "port": 80, "nodePort": 30100 }, { "port": 443, "nodePort": 30101 } ] } }'
-kubectl get svc -n ingress-nginx
-```
-
-Cài configmap
-
-```
-kubectl -n ingress-nginx patch configmap ingress-nginx-controller --patch-file patch-configmap.yaml
-```
-
 # 1. Chạy Trên Máy Local
 
 ## 1.1 Cài ArgoCD
@@ -88,7 +68,7 @@ argocd admin initial-password -n argocd
 Login bằng CLI
 
 ```
-argocd login <IP>
+argocd login <IP:Port>
 ```
 
 Đổi password ArgoCD
@@ -130,7 +110,29 @@ Login vào CircleCI bằng tk Github, chọn Repo cần CI và tạo File config
 
 Chọn Projects -> chọn Repo -> Set Up Project -> Project Settings -> Enviroment Variables -> thêm tài khoản Docker với [Name: DOCKER_PASSWORD, Value: "password docker"], [Name: DOCKER_USER, Value: "user name"]
 
-## 1.4 ArgoCD
+## 1.4 Cài Nginx Ingress Controller
+
+Cài đặt Nginx Ingress Controller
+
+```
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.1.1/deploy/static/provider/baremetal/deploy.yaml
+kubectl get po -n ingress-nginx
+```
+
+Chuyển tiếp các yêu cầu từ bên ngoài đến dịch vụ trong Cluster
+
+```
+kubectl -n ingress-nginx patch svc ingress-nginx-controller --patch '{"spec": { "type": "NodePort", "ports": [ { "port": 80, "nodePort": 30100 }, { "port": 443, "nodePort": 30101 } ] } }'
+kubectl get svc -n ingress-nginx
+```
+
+Cài configmap
+
+```
+kubectl -n ingress-nginx patch configmap ingress-nginx-controller --patch-file patch-configmap.yaml
+```
+
+## 1.5 ArgoCD
 
 Chạy File argocd-application.yaml để tạo App trên ArgoCD
 ```
@@ -158,10 +160,11 @@ helm install my-release -n cert-manager --version v1.9.1 jetstack/cert-manager
 Nginx Ingress Controller để quản lý việc External IP Loadbalancer ra bên ngoài.
 
 ```
+kubectl create ns ingress-nginx
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
-helm install nginx-ingress ingress-nginx/ingress-nginx --set controller.publishService.enabled=true
-kubectl get svc -n default -o wide
+helm install nginx-ingress -n ingress-nginx ingress-nginx/ingress-nginx --set controller.publishService.enabled=true
+kubectl get svc -n ingress-nginx -o wide
 ```
 
 
