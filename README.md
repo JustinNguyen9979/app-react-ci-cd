@@ -95,7 +95,7 @@ helm install longhorn longhorn/longhorn --namespace longhorn-system --create-nam
 Xem các Pod của Longhorn
 
 ```
-kubectl -n longhorn-system get pod
+kubectl get pod -n longhorn-system 
 ```
 
 Truy cập vào giao diện UI thông qua Port-forward
