@@ -77,7 +77,21 @@ argocd login <IP:Port>
 argocd account update-password
 ```
 
-## 1.2 Cài Đặt Longhorn Để Lưu Trữ Dữ Liệu
+## 1.2 Tạo Cặp Khóa RSA
+
+Tạo thư mục Cert
+
+```
+mkdir certs
+```
+
+Chạy lệnh Openssl để tạo File tự xác thực:
+
+```
+openssl req -newkey rsa:4096 -nodes -sha256 -keyout certs/registry.key -addext "subjectAltName = DNS:docker-registry.chop.dev" -x509 -days 3650 -out certs/registry.crt
+```
+
+## 1.3 Cài Đặt Longhorn Để Lưu Trữ Dữ Liệu
 
 Thêm Repo của Longhorn
 
@@ -104,13 +118,13 @@ Truy cập vào giao diện UI thông qua Port-forward
 kubectl port-forward svc/longhorn-frontend -n longhorn-system 8080:80
 ```
 
-## 1.3 Sử Dụng CircleCI Để Test-Build-Push Code
+## 1.4 Sử Dụng CircleCI Để Test-Build-Push Code
 
 Login vào CircleCI bằng tk Github, chọn Repo cần CI và tạo File config.yaml.
 
 Chọn Projects -> chọn Repo -> Set Up Project -> Project Settings -> Enviroment Variables -> thêm tài khoản Docker với [Name: DOCKER_PASSWORD, Value: "password docker"], [Name: DOCKER_USER, Value: "user name"]
 
-## 1.4 Cài Nginx Ingress Controller
+## 1.5 Cài Nginx Ingress Controller
 
 Cài đặt Nginx Ingress Controller
 
@@ -132,7 +146,7 @@ Cài configmap
 kubectl -n ingress-nginx patch configmap ingress-nginx-controller --patch-file patch-configmap.yaml
 ```
 
-## 1.5 ArgoCD
+## 1.6 ArgoCD
 
 Chạy File argocd-application.yaml để tạo App trên ArgoCD
 ```
