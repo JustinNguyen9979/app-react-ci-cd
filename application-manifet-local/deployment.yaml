@@ -1,3 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: web-app
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -28,6 +33,10 @@ spec:
             cpu: "500m"
         ports:
         - containerPort: 80
+      volumes:
+        - name: nginx-persistent-storage
+          persistentVolumeClaim:
+            claimName: web-app-pvc
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -74,7 +83,7 @@ spec:
   storageClassName: longhorn
   resources:
     requests:
-      storage: 100Mi
+      storage: 1Gi
   volumeMode: Filesystem
   accessModes:
     - ReadWriteMany
