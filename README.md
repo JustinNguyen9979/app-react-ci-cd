@@ -77,7 +77,7 @@ argocd login <IP:Port>
 argocd account update-password
 ```
 
-## 1.2 Tạo Cặp Khóa RSA
+## 1.2 Tạo Cặp Khóa RSA & Docker Registry
 
 Tạo thư mục Cert
 
@@ -90,6 +90,8 @@ Chạy lệnh Openssl để tạo File tự xác thực:
 ```
 openssl req -newkey rsa:4096 -nodes -sha256 -keyout certs/registry.key -addext "subjectAltName = DNS:docker-registry.chop.dev" -x509 -days 3650 -out certs/registry.crt
 ```
+
+
 
 ## 1.3 Cài Đặt Longhorn Để Lưu Trữ Dữ Liệu
 
